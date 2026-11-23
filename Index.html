@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#08030e">
+<title>To The One Who Makes Life Beautiful | For You</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: #08030e;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    color: white;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    user-select: none;
+}
+
+.scene {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#background { z-index: -2; }
+#fxCanvas { z-index: 3; pointer-events: none; }
+
+.controls {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    animation: fadeIn 1.5s ease 1.2s forwards;
+}
+
+.ctrl-btn {
+    background: rgba(255, 228, 235, 0.06);
+    border: 1px solid rgba(255, 182, 203, 0.22);
+    color: #e6bccb;
+    font: 10px monospace;
+    letter-spacing: 2px;
+    padding: 7px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ctrl-btn:hover {
+    background: rgba(255, 70, 121, 0.18);
+    border-color: rgba(255, 140, 175, 0.5);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 45, 100, 0.3);
+}
+
+.ctrl-btn.active {
+    border-color: rgba(255, 140, 175, 0.55);
+    color: #ffe7eb;
+    background: rgba(228, 61, 117, 0.18);
+}
+
+.content {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    padding: clamp(24px, 6vh, 52px) 20px clamp(22px, 5vh, 44px);
+    z-index: 2;
+}
+
+.heading {
+    width: 100%;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: slideDown 1.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+}
+
+.eyebrow {
+    color: #d6a7b9;
+    font: 10px monospace;
+    letter-spacing: 5px;
+    margin-bottom: 12px;
+    opacity: 0.85;
+}
+
+h1 {
+    color: #ffe7eb;
+    font-size: clamp(19px, 4.4vw, 29px);
+    font-weight: normal;
+    letter-spacing: 2.5px;
+    line-height: 1.32;
+    text-shadow: 0 0 22px rgba(215, 46, 108, 0.85), 0 0 45px rgba(181, 46, 100, 0.4);
+}
+
+.subtitle {
+    color: #c7a2b8;
+    font: 11px monospace;
+    letter-spacing: 3.5px;
+    margin-top: 10px;
+    opacity: 0.9;
+}
+
+.art {
+    position: relative;
+    width: min(92vw, 460px);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.25s ease-out;
+}
+
+#roseCanvas {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: 58vh;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 0 25px rgba(255, 25, 85, 0.2));
+}
+
+.hint {
+    position: absolute;
+    bottom: 8px;
+    font: 9px monospace;
+    letter-spacing: 2.5px;
+    color: rgba(214, 167, 185, 0.45);
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeIn 2s ease 5.5s forwards;
+}
+
+.footer {
+    width: 100%;
+    z-index: 2;
+    padding: 0 12px;
+}
+
+.message {
+    color: #ffe8ee;
+    font-size: clamp(15px, 3.6vw, 21px);
+    font-style: italic;
+    letter-spacing: 0.6px;
+    line-height: 1.5;
+    min-height: 3.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 18px rgba(228, 61, 117, 0.85);
+}
+
+.signature {
+    margin-top: 14px;
+    color: #9e7d95;
+    font: 9.5px monospace;
+    letter-spacing: 4.5px;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+}
+
+.signature.visible {
+    opacity: 1;
+}
+
+.cursor {
+    display: inline-block;
+    color: #ff7ba5;
+    font-style: normal;
+    margin-left: 2px;
+    animation: blink 0.85s infinite;
+}
+
+@keyframes blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-height: 680px) {
+    .content { padding: 14px 16px; }
+    .eyebrow { margin-bottom: 6px; }
+    .subtitle { margin-top: 6px; }
+    #roseCanvas { max-height: 52vh; }
+    .message { min-height: 2.6em; }
+    .signature { margin-top: 8px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="scene" id="scene">
+
+    <canvas id="background"></canvas>
+    <canvas id="fxCanvas"></canvas>
+
+    <div class="controls">
+        <button class="ctrl-btn" id="soundBtn" title="Toggle Ambient Music">
+            <span id="soundIcon">♪</span> <span id="soundLabel">SOUND</span>
+        </button>
+        <button class="ctrl-btn" id="replayBtn" title="Replay Bloom">
+            ↻ REPLAY
+        </button>
+    </div>
+
+    <div class="content">
+        <header class="heading">
+            <div class="eyebrow">A DIGITAL GIFT · 001</div>
+            <h1>TO THE ONE WHO MAKES LIFE BEAUTIFUL</h1>
+            <div class="subtitle">SOME FLOWERS ARE MORE THAN FLOWERS</div>
+        </header>
+
+        <div class="art" id="artContainer">
+            <canvas id="roseCanvas" width="700" height="850"></canvas>
+            <div class="hint">TAP THE ROSE</div>
+        </div>
+
+        <footer class="footer">
+            <div class="message"><span id="message"></span></div>
+            <div class="signature" id="signature">
+                A LITTLE PIECE OF MY HEART
+            </div>
+        </footer>
+    </div>
+
+</div>
+
+<script>
+// ======================================
+// 0. INTERACTIVE STATE & POINTER TRACKING
+// ======================================
+
+const pointer = {
+    x: innerWidth * 0.5,
+    y: innerHeight * 0.5,
+    normX: 0,
+    normY: 0,
+    active: false
+};
+
+const fxCanvas = document.getElementById("fxCanvas");
+const fxc = fxCanvas.getContext("2d");
+const sparkles = [];
+
+function spawnSparkle(x, y, burst = false) {
+    const count = burst ? 26 : 2;
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = burst ? (1.2 + Math.random() * 4.2) : (0.3 + Math.random() * 1.1);
+        const isHeart = burst && Math.random() > 0.45;
+        sparkles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - (burst ? 1.2 : 0.4),
+            size: burst ? (3 + Math.random() * 4.5) : (1.5 + Math.random() * 2.2),
+            alpha: 1,
+            decay: burst ? (0.014 + Math.random() * 0.012) : (0.022 + Math.random() * 0.015),
+            hue: Math.random() > 0.35 ? "#ff5e93" : "#ffd29d",
+            isHeart
+        });
+    }
+}
+
+function updatePointer(clientX, clientY) {
+    pointer.x = clientX;
+    pointer.y = clientY;
+    pointer.normX = (clientX / innerWidth - 0.5) * 2;
+    pointer.normY = (clientY / innerHeight - 0.5) * 2;
+    pointer.active = true;
+    spawnSparkle(clientX, clientY, false);
+}
+
+addEventListener("mousemove", e => updatePointer(e.clientX, e.clientY));
+addEventListener("touchmove", e => {
+    if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
+
+document.getElementById("artContainer").addEventListener("click", e => {
+    spawnSparkle(e.clientX, e.clientY, true);
+});
+
+
+// ======================================
+// 1. AMBIENT MUSIC BOX SYNTH (WEB AUDIO)
+// ======================================
+
+let audioCtx = null;
+let musicPlaying = false;
+let melodyTimer = null;
+
+const notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 987.77, 783.99, 659.25, 587.33, 739.99, 880.00, 1174.66];
+let noteStep = 0;
+
+function playMusicBoxNote() {
+    if (!musicPlaying || !audioCtx) return;
+
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(notes[noteStep % notes.length], now);
+    noteStep++;
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.045, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 2.5);
+}
+
+const soundBtn = document.getElementById("soundBtn");
+const soundLabel = document.getElementById("soundLabel");
+
+soundBtn.addEventListener("click", () => {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+
+    musicPlaying = !musicPlaying;
+    if (musicPlaying) {
+        soundBtn.classList.add("active");
+        soundLabel.textContent = "ON";
+        playMusicBoxNote();
+        melodyTimer = setInterval(playMusicBoxNote, 850);
+    } else {
+        soundBtn.classList.remove("active");
+        soundLabel.textContent = "SOUND";
+        clearInterval(melodyTimer);
+    }
+});
+
+
+// ======================================
+// 2. COSMIC BACKGROUND & PETALS
+// ======================================
+
+const bg = document.getElementById("background");
+const bc = bg.getContext("2d");
+
+let BW = 0, BH = 0;
+
+function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+
+    BW = innerWidth;
+    BH = innerHeight;
+
+    bg.width = BW * dpr;
+    bg.height = BH * dpr;
+    bc.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    fxCanvas.width = BW * dpr;
+    fxCanvas.height = BH * dpr;
+    fxc.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+addEventListener("resize", resize);
+resize();
+
+const stars = Array.from({length: 130}, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.5 + 0.3,
+    phase: Math.random() * 6.28,
+    speed: Math.random() * 1.8 + 0.5,
+    depth: 0.4 + Math.random() * 0.8
+}));
+
+const dust = Array.from({length: 70}, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: Math.random() * 1.9 + 0.5,
+    speed: Math.random() * 0.00011 + 0.00003,
+    phase: Math.random() * 6.28
+}));
+
+const fallingPetals = Array.from({length: 22}, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    speed: Math.random() * 0.00016 + 0.00006,
+    rotation: Math.random() * 6.28,
+    rotSpeed: (Math.random() - 0.5) * 0.0012,
+    size: Math.random() * 5.5 + 2.5,
+    sway: Math.random() * 0.015 + 0.005
+}));
+
+function drawHeart(context, x, y, size) {
+    context.beginPath();
+    const topCurveHeight = size * 0.3;
+    context.moveTo(x, y + topCurveHeight);
+    context.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + topCurveHeight);
+    context.bezierCurveTo(x - size / 2, y + (size + topCurveHeight) / 2, x, y + (size + topCurveHeight) / 1.4, x, y + size);
+    context.bezierCurveTo(x, y + (size + topCurveHeight) / 1.4, x + size / 2, y + (size + topCurveHeight) / 2, x + size / 2, y + topCurveHeight);
+    context.bezierCurveTo(x + size / 2, y, x, y, x, y + topCurveHeight);
+    context.closePath();
+    context.fill();
+}
+
+function background(t) {
+    const grad = bc.createLinearGradient(0, 0, BW, BH);
+    grad.addColorStop(0, "#08030e");
+    grad.addColorStop(0.5, "#17071b");
+    grad.addColorStop(1, "#05040d");
+
+    bc.fillStyle = grad;
+    bc.fillRect(0, 0, BW, BH);
+
+    // Subtle parallax shift
+    const px = pointer.normX * 14;
+    const py = pointer.normY * 14;
+
+    // Atmospheric nebula
+    const glow = bc.createRadialGradient(
+        BW * 0.5 + px, BH * 0.47 + py, 10,
+        BW * 0.5 + px, BH * 0.47 + py, Math.max(BW, BH) * 0.55
+    );
+    glow.addColorStop(0, "rgba(130, 22, 76, 0.26)");
+    glow.addColorStop(0.45, "rgba(82, 24, 105, 0.13)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    bc.fillStyle = glow;
+    bc.fillRect(0, 0, BW, BH);
+
+    // Distant stars
+    stars.forEach(s => {
+        const opacity = 0.22 + 0.78 * Math.abs(Math.sin(t * 0.001 * s.speed + s.phase));
+        bc.globalAlpha = opacity;
+        bc.fillStyle = "#ffe5f5";
+        bc.shadowColor = "#c59aff";
+        bc.shadowBlur = 7;
+
+        const sx = ((s.x * BW + px * s.depth) + BW) % BW;
+        const sy = ((s.y * BH + py * s.depth) + BH) % BH;
+
+        bc.beginPath();
+        bc.arc(sx, sy, s.r, 0, Math.PI * 2);
+        bc.fill();
+    });
+
+    bc.globalAlpha = 1;
+    bc.shadowBlur = 0;
+
+    // Floating golden particles
+    dust.forEach(d => {
+        const x = (d.x + Math.sin(t * 0.0003 + d.phase) * 0.025) * BW + px * 0.6;
+        const y = ((d.y - t * d.speed + 1) % 1) * BH;
+
+        bc.fillStyle = "rgba(255, 198, 150, 0.68)";
+        bc.shadowColor = "#ffb77e";
+        bc.shadowBlur = 8;
+
+        bc.beginPath();
+        bc.arc(x, y, d.r, 0, Math.PI * 2);
+        bc.fill();
+    });
+
+    bc.shadowBlur = 0;
+
+    // Falling rose petals with gentle breeze deflection
+    fallingPetals.forEach(p => {
+        p.y += p.speed * (BW + BH) * 0.5;
+        p.x += Math.sin(t * 0.0005 + p.rotation) * p.sway * 0.15;
+
+        if (p.y > 1.05) {
+            p.y = -0.05;
+            p.x = Math.random();
+        }
+
+        let x = p.x * BW;
+        let y = p.y * BH;
+
+        if (pointer.active) {
+            const dx = x - pointer.x;
+            const dy = y - pointer.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 130 && dist > 1) {
+                p.x += (dx / dist) * 0.0015;
+            }
+        }
+
+        bc.save();
+        bc.translate(x, y);
+        bc.rotate(p.rotation + t * p.rotSpeed);
+
+        bc.fillStyle = "rgba(242, 74, 120, 0.58)";
+        bc.shadowColor = "#ff4679";
+        bc.shadowBlur = 10;
+
+        bc.beginPath();
+        bc.moveTo(0, -p.size);
+        bc.bezierCurveTo(p.size, -p.size * 0.5, p.size * 0.8, p.size, 0, p.size);
+        bc.bezierCurveTo(-p.size * 0.8, p.size, -p.size, -p.size * 0.5, 0, -p.size);
+        bc.fill();
+
+        bc.restore();
+    });
+
+    bc.shadowBlur = 0;
+    bc.globalAlpha = 1;
+}
+
+function renderFx() {
+    fxc.clearRect(0, 0, BW, BH);
+    for (let i = sparkles.length - 1; i >= 0; i--) {
+        const sp = sparkles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy += 0.02;
+        sp.alpha -= sp.decay;
+
+        if (sp.alpha <= 0) {
+            sparkles.splice(i, 1);
+            continue;
+        }
+
+        fxc.save();
+        fxc.globalAlpha = sp.alpha;
+        fxc.fillStyle = sp.hue;
+        fxc.shadowColor = sp.hue;
+        fxc.shadowBlur = 10;
+
+        if (sp.isHeart) {
+            drawHeart(fxc, sp.x, sp.y, sp.size * 2.2);
+        } else {
+            fxc.beginPath();
+            fxc.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+            fxc.fill();
+        }
+        fxc.restore();
+    }
+}
+
+
+// ======================================
+// 3. ASCII ROSE ENGINE
+// ======================================
+
+const canvas = document.getElementById("roseCanvas");
+const ctx = canvas.getContext("2d");
+
+const art = document.createElement("canvas");
+art.width = 700;
+art.height = 850;
+const g = art.getContext("2d");
+
+const chars = " .,:;!|+*#%@01";
+const W = 700;
+const H = 850;
+
+let started = performance.now();
+
+// Smooth cubic ease-out bloom curve
+function bloomProgress(t) {
+    const raw = Math.max(0, Math.min(1, (t - 0.5) / 4.2));
+    return 1 - Math.pow(1 - raw, 3);
+}
+
+function drawPetal(length, width, angle, distance, layer) {
+    g.save();
+    g.rotate(angle);
+    g.translate(0, -distance);
+
+    const gradient = g.createLinearGradient(0, 0, width * 0.25, -length);
+    gradient.addColorStop(0, "#5b001a");
+    gradient.addColorStop(0.3, "#a9002c");
+    gradient.addColorStop(0.65, "#ec204b");
+    gradient.addColorStop(1, "#ff94a7");
+
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(-width * 0.95, -length * 0.2, -width * 1.15, -length * 0.75, 0, -length);
+    g.bezierCurveTo(width * 1.15, -length * 0.75, width * 0.95, -length * 0.2, 0, 0);
+    g.closePath();
+
+    g.fillStyle = gradient;
+    g.shadowColor = "#ff174d";
+    g.shadowBlur = layer === 0 ? 20 : 12;
+    g.fill();
+
+    // Fine veins
+    g.shadowBlur = 0;
+    g.beginPath();
+    g.moveTo(0, -4);
+    g.quadraticCurveTo(width * 0.16, -length * 0.48, 0, -length * 0.91);
+    g.strokeStyle = "rgba(255, 180, 195, 0.38)";
+    g.lineWidth = 2;
+    g.stroke();
+
+    g.restore();
+}
+
+function flower(t, sway) {
+    const bloom = bloomProgress(t);
+    const breathe = bloom >= 0.99 ? Math.sin(t * 1.8) * 0.018 : 0;
+    const scale = 0.08 + 0.92 * bloom + breathe;
+
+    g.save();
+    g.translate(350 + sway * 14, 320);
+    g.rotate(sway * 0.04);
+    g.scale(scale, scale);
+
+    // Outer petals
+    for (let i = 0; i < 13; i++) {
+        drawPetal(185, 79, (Math.PI * 2 * i / 13) + 0.15 + sway * 0.02, 43 * bloom, 0);
+    }
+
+    // Second layer
+    for (let i = 0; i < 11; i++) {
+        drawPetal(155, 70, Math.PI * 2 * i / 11 + 0.28 - sway * 0.015, 25 * bloom, 1);
+    }
+
+    // Third layer
+    for (let i = 0; i < 9; i++) {
+        drawPetal(115, 55, Math.PI * 2 * i / 9 + 0.5 + sway * 0.01, 10 * bloom, 2);
+    }
+
+    // Inner petals
+    for (let i = 0; i < 7; i++) {
+        drawPetal(78, 39, Math.PI * 2 * i / 7 + 0.7, 0, 3);
+    }
+
+    // Rose heart
+    const center = g.createRadialGradient(0, 0, 2, 0, 0, 45);
+    center.addColorStop(0, "#ffa6b6");
+    center.addColorStop(0.35, "#ed1647");
+    center.addColorStop(1, "#63001b");
+
+    g.beginPath();
+    g.arc(0, 0, 43, 0, Math.PI * 2);
+    g.fillStyle = center;
+    g.fill();
+
+    // Spiral center
+    g.strokeStyle = "#ffa8b8";
+    g.lineWidth = 5;
+    g.beginPath();
+
+    for (let i = 0; i < 150; i++) {
+        const a = i * 0.065;
+        const r = 2 + a * 2.8;
+        const x = r * Math.cos(a);
+        const y = r * Math.sin(a);
+        if (i === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+    }
+    g.stroke();
+    g.restore();
+}
+
+function stem(sway) {
+    g.save();
+    g.strokeStyle = "#00a943";
+    g.lineWidth = 8;
+    g.shadowColor = "#00ff58";
+    g.shadowBlur = 14;
+
+    const topX = 350 + sway * 14;
+
+    g.beginPath();
+    g.moveTo(topX, 470);
+    g.bezierCurveTo(336 + sway * 8, 575, 367 + sway * 3, 690, 350, 800);
+    g.stroke();
+
+    g.lineWidth = 2;
+    for (let i = -2; i <= 2; i += 2) {
+        g.beginPath();
+        g.moveTo(topX + i * 2, 490);
+        g.lineTo(350 + i * 2, 785);
+        g.stroke();
+    }
+    g.restore();
+}
+
+function leaf(x, y, flip, rotation, sway) {
+    g.save();
+    g.translate(x, y);
+    g.scale(flip, 1);
+    g.rotate(rotation + sway * 0.05);
+
+    const gradient = g.createLinearGradient(0, 0, 190, 0);
+    gradient.addColorStop(0, "#005522");
+    gradient.addColorStop(0.45, "#21e85d");
+    gradient.addColorStop(1, "#007a32");
+
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(45, -78, 140, -70, 195, 0);
+    g.bezierCurveTo(140, 65, 45, 65, 0, 0);
+
+    g.fillStyle = gradient;
+    g.shadowColor = "#00ff58";
+    g.shadowBlur = 13;
+    g.fill();
+
+    g.shadowBlur = 0;
+    g.strokeStyle = "#a0ffb3";
+    g.lineWidth = 2;
+
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.quadraticCurveTo(90, 0, 195, 0);
+    g.stroke();
+
+    for (let i = 1; i <= 5; i++) {
+        const px = i * 30;
+        g.beginPath();
+        g.moveTo(px, 0);
+        g.lineTo(px + 15, -15);
+        g.stroke();
+
+        g.beginPath();
+        g.moveTo(px, 0);
+        g.lineTo(px + 15, 14);
+        g.stroke();
+    }
+    g.restore();
+}
+
+function drawArtwork(t) {
+    const sway = Math.sin(t * 1.15) * 0.65 + pointer.normX * 0.45;
+    g.clearRect(0, 0, W, H);
+
+    stem(sway);
+    leaf(350 + sway * 6, 625, 1, -0.1, sway);
+    leaf(350 + sway * 3, 710, -1, 0.1, sway);
+    flower(t, sway);
+}
+
+function asciiRender() {
+    const data = g.getImageData(0, 0, W, H).data;
+    ctx.clearRect(0, 0, W, H);
+
+    const sx = 7;
+    const sy = 9;
+
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (let y = 0; y < H; y += sy) {
+        for (let x = 0; x < W; x += sx) {
+            const i = (y * W + x) * 4;
+            const r = data[i];
+            const green = data[i + 1];
+            const b = data[i + 2];
+            const alpha = data[i + 3];
+
+            if (alpha < 40) continue;
+
+            const brightness = (r * 0.30 + green * 0.59 + b * 0.11) / 255;
+            const index = Math.min(chars.length - 1, Math.floor(brightness * chars.length));
+
+            ctx.fillStyle = `rgba(${r},${green},${b},0.96)`;
+            ctx.shadowColor = r > green * 1.25 ? "#ff174d" : "#00ff55";
+            ctx.shadowBlur = 5;
+
+            ctx.fillText(chars[index], x, y);
+        }
+    }
+    ctx.shadowBlur = 0;
+}
+
+function halo(t) {
+    const x = W / 2;
+    const y = 320;
+    const pulse = 1 + Math.sin(t * 0.0018) * 0.05;
+
+    const glow = ctx.createRadialGradient(x, y, 10, x, y, 260 * pulse);
+    glow.addColorStop(0, "rgba(255, 35, 85, 0.16)");
+    glow.addColorStop(0.45, "rgba(165, 20, 100, 0.08)");
+    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+}
+
+
+// ======================================
+// 4. MAIN LOOP
+// ======================================
+
+let previousFrame = 0;
+
+function animate(timestamp) {
+    if (timestamp - previousFrame < 30) {
+        requestAnimationFrame(animate);
+        return;
+    }
+    previousFrame = timestamp;
+
+    const t = (timestamp - started) / 1000;
+
+    background(timestamp);
+    drawArtwork(t);
+    halo(timestamp);
+    asciiRender();
+    renderFx();
+
+    requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+
+
+// ======================================
+// 5. PERSONAL MESSAGE & REPLAY
+// ======================================
+
+const messageText = "If I could give you one thing, it would be the ability to see yourself through my eyes.";
+const msgEl = document.getElementById("message");
+const sigEl = document.getElementById("signature");
+
+let position = 0;
+let typingTimeout = null;
+let startTypingTimeout = null;
+
+function startTypingSequence() {
+    clearTimeout(typingTimeout);
+    clearTimeout(startTypingTimeout);
+    position = 0;
+    msgEl.innerHTML = "";
+    sigEl.classList.remove("visible");
+
+    startTypingTimeout = setTimeout(function typeChar() {
+        if (position < messageText.length) {
+            msgEl.innerHTML = messageText.slice(0, position + 1) + '<span class="cursor">_</span>';
+            position++;
+            const delay = messageText[position - 1] === "," ? 260 : 62;
+            typingTimeout = setTimeout(typeChar, delay);
+        } else {
+            sigEl.classList.add("visible");
+        }
+    }, 4500);
+}
+
+startTypingSequence();
+
+document.getElementById("replayBtn").addEventListener("click", () => {
+    started = performance.now();
+    spawnSparkle(innerWidth * 0.5, innerHeight * 0.45, true);
+    startTypingSequence();
+});
+</script>
+
+</body>
+</html>
